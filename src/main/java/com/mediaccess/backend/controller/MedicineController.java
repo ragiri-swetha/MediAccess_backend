@@ -1,40 +1,45 @@
 
 package com.mediaccess.backend.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.mediaccess.backend.model.Medicine;
+import com.mediaccess.backend.repository.MedicineRepository;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
-@CrossOrigin(origins = {
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
-})
 @RestController
 @RequestMapping("/api/medicines")
 public class MedicineController {
 
-    @GetMapping
-    public List<Map<String, String>> getMedicines() {
+    private final MedicineRepository repository;
 
-        return List.of(
-            Map.of(
-                "name", "Paracetamol",
-                "use", "Fever and pain relief"
-            ),
-            Map.of(
-                "name", "Cetirizine",
-                "use", "Allergy relief"
-            ),
-            Map.of(
-                "name", "ORS",
-                "use", "Helps replace lost fluids"
-            )
-        );
+    public MedicineController(MedicineRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    public List<Medicine> getMedicines(
+            @RequestParam(required = false) String search) {
+
+        if (search == null || search.isBlank()) {
+            return repository.findAll();
+        }
+
+        return repository.findByNameContainingIgnoreCase(search);
+    }
+
+    @GetMapping("/{id}")
+    public Medicine getMedicineById(@PathVariable long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Medicine not found"));
     }
 }
+
+
+
 
 
